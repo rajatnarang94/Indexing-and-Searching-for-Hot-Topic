@@ -1,0 +1,93 @@
+#  create index...
+curl -XPOST "http://localhost:9200/twitter/"
+
+
+# define mapping
+curl -XPUT "http://localhost:9200/twitter/doc/_mapping" -d'
+{
+"properties": {
+
+		"text": {
+           "type": "string",
+           "index": "analyzed"
+         },
+
+	"timestamp" : {
+           "type": "date"
+         }
+}}'
+
+
+# dummy documents...
+docs=[{
+             "text" : "@Reuters Homage to 'Monty Python'.",
+            "timestamp" : "2019-04-03T23:37:12.815Z"
+},
+{
+             "text" : "@rhiminee @debz416 And don't ever try and make a lucid factual response to anything one of his supporters posts and… https://content-available-to-author-only.co/pf91qDJq5l",
+            "timestamp" : "2019-04-03T23:37:22.756Z"
+},
+{
+             "text" : "RT @cathie_wood: @A50Challenge He's not the Messiah - he's a very naughty boy! (Life of Brian - more Monty Python references helping us in…",
+            "timestamp" : "2019-04-03T23:37:32.758Z"
+},
+{
+             "text" : "RT @fanxsaltlake: Please welcome our next FanX Spring 2019 Guest, John Cleese! Best known for his roles in Monty Python, A Fish Called Wand…",
+            "timestamp" : "2019-04-03T23:38:02.766Z"
+}]
+
+
+# index documents...
+for doc in docs:
+    es_conn.index(index= 'twitter', doc_type= 'doc', body = doc)
+
+
+
+from elasticsearch import Elasticsearch
+es_conn = Elasticsearch('localhost:9200')
+
+
+
+# 1. match query
+query={"query":{"match":{"text":"Fish call"}}}
+
+
+# 2. match query with AND operator
+query={"query":{"match" : { "text":{"query":"fish call","operator":"and"}}}}
+
+
+# 3. Aggregation query....
+query={
+    "aggs": {
+        "range": {
+            "date_range": {
+                "field": "timestamp",
+                # "format": "MM-yyyy",
+                "ranges": [
+                    {   "key":"older",
+                        "to": "2019-04-03T23:37:20" },
+                    { "key":"new",
+                        "from": "2019-04-03T23:37:30" }
+                ]
+            }
+        }
+    }
+}
+
+# 4. term query...
+query={"query":{"term":{"timestamp":"2019-04-03T23:37:32.758Z"}}}
+
+
+# 5. Range query.....
+query={"query":{"range" : {
+    "timestamp" : {
+        "gt" : "2019-04-03T23:37:30",
+        "lt" : "2019-04-03T23:37:33"
+    }
+}
+}
+}
+
+
+# search query on elasticsearch
+response = es_conn.search(index= 'twitter', doc_type= 'doc', body = query)

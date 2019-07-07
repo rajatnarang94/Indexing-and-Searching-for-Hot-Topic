@@ -1,0 +1,10 @@
+﻿elasticsearch==6.3.1
+nltk
+string
+configparser
+tweepy==3.7.0
+kafka-python==1.4.4
+Brew install logstash
+json
+datetime
+hashlib
